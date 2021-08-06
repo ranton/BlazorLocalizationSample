@@ -1,0 +1,83 @@
+﻿@inject IHttpContextAccessor Http
+
+@if (cultures != null)
+{
+    <form>
+        <select value="@selectedCulture" @onchange="@OnSelectRequestCultureChange" class="form-control">
+            <option>Select</option>
+            @foreach (var culture in cultures)
+            {
+                <option value="@culture.Key">@culture.Value</option>
+            }
+        </select>
+    </form>
+}
+
+
+@code {
+    private string selectedCulture = System.Threading.Thread.CurrentThread.CurrentUICulture.ToString();
+    //public string SelectedCulture
+    //{
+    //    get
+    //    {
+    //        return _selectedCulture;
+    //    }
+    //    set
+    //    {
+    //        _selectedCulture = value;
+    //    }
+    //}
+
+    [Inject]
+    public IConfiguration Configuration { get; set; }
+
+    [Inject]
+    public NavigationManager NavigationManager { get; set; }
+
+    private Dictionary<string, string> cultures;
+
+    protected override void OnInitialized()
+    {
+        cultures = Configuration.GetSection("Cultures")
+                .GetChildren().ToDictionary(d => d.Key, d => d.Value);
+        //SetSelectedCulture();
+    }
+
+    //private void SetSelectedCulture()
+    //{
+    //    if (_selectedCulture == null)
+    //    {
+    //        //var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+    //        if (!QueryHelpers.ParseQuery(NavigationManager.Uri).TryGetValue("culture", out var _selectedCulture))
+    //        {
+    //            var cookieValue = Http.HttpContext.Request.Cookies[CookieRequestCultureProvider.DefaultCookieName];
+    //            var req = CookieRequestCultureProvider.ParseCookieValue(cookieValue);
+    //            if(req != null)
+    //            {
+    //                _selectedCulture = req.Cultures[0].Value;
+    //            }
+    //        }
+    //    }
+    //}
+
+    private void RequestCultureChange()
+    {
+
+    }
+
+    void OnSelectRequestCultureChange(ChangeEventArgs e)
+    {
+
+        selectedCulture = e.Value.ToString();
+
+        var uri = new Uri(NavigationManager.Uri)
+                        .GetComponents(UriComponents.PathAndQuery, UriFormat.Unescaped);
+
+        var query = $"?culture={Uri.EscapeDataString(selectedCulture)}&" +
+                $"redirectUri={Uri.EscapeDataString(uri)}";
+
+        //var query = $"?culture={Uri.EscapeDataString(_selectedCulture)}";
+
+        NavigationManager.NavigateTo("/Culture/Set" + uri + query, forceLoad: true);
+    }
+}
